@@ -585,6 +585,32 @@ run(void)
 	}
 }
 
+void
+calcxposition(int x_org, int width, int *x)
+{
+	int userDefinedPosX = x_org + userPositionX;
+	int maxX = x_org + width;
+	*x = userDefinedPosX < maxX ? userDefinedPosX : x_org;
+}
+
+void
+calcyposition(int y_org, int height, int *y)
+{
+	int h = topbar ? 0 : height - mh;
+	int userDefinedPosY = y_org + h + userPositionY;
+	int maxY = y_org + height;
+	*y = (userDefinedPosY < maxY) ? userDefinedPosY : y_org + h;
+}
+
+void
+setwidth(int org_width)
+{
+	if (userWidth > 0 && userWidth < org_width)
+		mw = userWidth;
+	else
+		mw = org_width - userPositionX;
+}
+
 static void
 setup(void)
 {
@@ -637,9 +663,10 @@ setup(void)
 				if (INTERSECT(x, y, 1, 1, info[i]))
 					break;
 
-		x = info[i].x_org;
-		y = info[i].y_org + (topbar ? 0 : info[i].height - mh);
-		mw = info[i].width;
+		calcxposition(info[i].x_org, info[i].width, &x);
+		calcyposition(info[i].y_org, info[i].height, &y);
+		setwidth(info[i].width);
+
 		XFree(info);
 	} else
 #endif
@@ -647,9 +674,10 @@ setup(void)
 		if (!XGetWindowAttributes(dpy, parentwin, &wa))
 			die("could not get embedding window attributes: 0x%lx",
 			    parentwin);
-		x = 0;
-		y = topbar ? 0 : wa.height - mh;
-		mw = wa.width;
+
+		calcxposition(0, wa.width, &x);
+		calcyposition(0, wa.height, &y);
+		setwidth(wa.width);
 	}
 	promptw = (prompt && *prompt) ? TEXTW(prompt) - lrpad / 4 : 0;
 	inputw = MIN(inputw, mw/3);
@@ -733,8 +761,24 @@ main(int argc, char *argv[])
 			colors[SchemeSel][ColFg] = argv[++i];
 		else if (!strcmp(argv[i], "-w"))   /* embedding window id */
 			embed = argv[++i];
+		else if (!strcmp(argv[i], "-x"))
+			userPositionX = atoi(argv[++i]);
+		else if (!strcmp(argv[i], "-y"))
+			userPositionY = atoi(argv[++i]);
+		else if (!strcmp(argv[i], "-width"))
+			userWidth = atoi(argv[++i]);
 		else
 			usage();
+
+	if (userPositionX < 0) {
+		die("-x must be a positive number");
+	}
+	if (userPositionY < 0) {
+		die("-y must be a positive number");
+	}
+	if (userWidth < 0) {
+		die("-width must be a positive number");
+	}
 
 	if (!setlocale(LC_CTYPE, "") || !XSupportsLocale())
 		fputs("warning: no locale support\n", stderr);

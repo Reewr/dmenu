@@ -21,3 +21,27 @@ static unsigned int lines      = 0;
  * for example: " /?\"&[]"
  */
 static const char worddelimiters[] = " ";
+
+/*
+ * The X position of where to place the menu. If larger than the monitor
+ * itself, it will reset itself to 0
+ *
+ * Will adjust width of menu (unless userWidth is set) to make sure the
+ * menu is not outside of the monitor
+ */
+static int userPositionX = 0;
+
+/*
+ * The Y position of where to place the menu. If larger than the monitor
+ * itself, it will reset itself to 0
+ *
+ * Will NOT adjust height automatically and may therefore draw outside
+ * of the monitor
+ */
+static int userPositionY = 0;
+
+/**
+ * Allows you to set the width of the bar itself, when 0 it fills
+ * the entire monitor as dmenu has always done
+ */
+static int userWidth = 0;
